@@ -35,8 +35,6 @@ public class PaymentService {
 		}
 
 		paymentRepo.save(payment);
-
-		// ✅ Publish event to Kafka
 		kafkaTemplate.send("payment-events", event);
 
 		return payment;
