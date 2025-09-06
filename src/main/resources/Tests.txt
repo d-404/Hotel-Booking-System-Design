@@ -1,0 +1,93 @@
+Hotel Booking System - Testing Guide
+
+============================================================
+1. Prerequisites
+============================================================
+- Java 17+
+- Maven 3.8+
+- PostgreSQL running on localhost:5432
+- Redis running on localhost:6379
+- Kafka running on localhost:9092
+
+Ensure Kafka topics exist: booking-events, payment-events (or use auto-create).
+
+============================================================
+2. Database Setup
+============================================================
+1. Create the database:
+   CREATE DATABASE postgres;
+2. The application will auto-run schema.sql to create tables.
+
+============================================================
+3. Run the Application
+============================================================
+1. Start PostgreSQL
+2. Start Redis: redis-server
+3. Start Kafka (Zookeeper + Broker)
+4. Run Spring Boot app:
+   mvn spring-boot:run
+
+============================================================
+4. Testing Booking Flow
+============================================================
+1. Create a booking:
+POST http://localhost:8080/api/bookings
+Content-Type: application/json
+
+{
+  "roomId": 101,
+  "userId": 55
+}
+
+Expected: Booking is created with status PENDING
+
+============================================================
+5. Testing Payment Flow (3DS)
+============================================================
+1. Initiate payment:
+POST http://localhost:8080/api/payments/initiate
+Content-Type: application/json
+
+{
+  "bookingId": 1,
+  "amount": 5000.00
+}
+
+Expected: Payment created with status PENDING
+
+2. Verify 3DS OTP:
+POST http://localhost:8080/api/payments/verify
+Content-Type: application/json
+
+{
+  "paymentId": 1,
+  "otp": "123456"
+}
+
+- If OTP = "123456" → Payment SUCCESS, Booking status CONFIRMED
+- If OTP != "123456" → Payment FAILED, Booking status FAILED
+
+============================================================
+6. Kafka Verification
+============================================================
+- PaymentService publishes PaymentEvent to "payment-events" topic
+- BookingEventConsumer listens and updates booking status automatically
+
+============================================================
+7. Database Verification
+============================================================
+Check tables after operations:
+SELECT * FROM bookings;
+SELECT * FROM payments;
+
+============================================================
+8. Notes
+============================================================
+- Use Postman or curl for API testing
+- Check application logs for Kafka event processing
+- Always verify booking status after payment event
+- Redis ensures room inventory is locked during booking
+
+============================================================
+End of Testing Guide
+============================================================

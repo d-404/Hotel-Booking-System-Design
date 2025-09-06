@@ -1,11 +1,9 @@
 package com.hotel.kafka;
 
-import java.util.Map;
-
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hotel.dto.PaymentEvent;
 import com.hotel.model.Booking;
 import com.hotel.repository.BookingRepository;
 
@@ -15,20 +13,17 @@ import jakarta.transaction.Transactional;
 public class BookingEventConsumer {
 
 	private final BookingRepository bookingRepo;
-	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	public BookingEventConsumer(BookingRepository bookingRepo) {
 		this.bookingRepo = bookingRepo;
 	}
 
-	@SuppressWarnings("unchecked")
 	@KafkaListener(topics = "payment-events", groupId = "hotel-group")
 	@Transactional
-	public void handlePaymentEvents(String payload) {
+	public void handlePaymentEvents(PaymentEvent paymentEvent) {
 		try {
-			Map<String, Object> event = objectMapper.readValue(payload, Map.class);
-			String eventType = (String) event.get("eventType");
-			Long bookingId = Long.valueOf(event.get("bookingId").toString());
+			String eventType = paymentEvent.getEventType();
+			Long bookingId = paymentEvent.getBookingId();
 
 			bookingRepo.findById(bookingId).ifPresent(booking -> {
 				switch (eventType) {
@@ -38,7 +33,7 @@ public class BookingEventConsumer {
 				bookingRepo.save(booking);
 			});
 
-			System.out.println("✅ Processed payment event: " + event);
+			System.out.println("✅ Processed payment event: " + paymentEvent);
 
 		} catch (Exception e) {
 			System.err.println("❌ Failed to process payment event: " + e.getMessage());

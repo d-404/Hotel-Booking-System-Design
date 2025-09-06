@@ -26,6 +26,9 @@ public class Payment {
 	private Status status;
 	private OffsetDateTime createdAt = OffsetDateTime.now();
 
+	protected Payment() {
+	}
+
 	public Payment(Long bookingId, double amount, Status status) {
 		this.bookingId = bookingId;
 		this.amount = amount;

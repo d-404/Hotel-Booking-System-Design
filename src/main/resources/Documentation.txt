@@ -1,0 +1,131 @@
+Hotel Booking System - Spring Boot + Kafka + Redis + Postgres
+
+============================================================
+Overview
+============================================================
+This project implements a simplified Hotel Booking System using:
+- Spring Boot (REST APIs & business logic)
+- Kafka (event-driven booking flow)
+- Redis (distributed locking & caching)
+- PostgreSQL (persistent storage)
+
+It also includes a simulated Payment Service with 3DS authentication flow.
+
+============================================================
+Features
+============================================================
+1. Hotel & Room Management
+2. Search Availability (with Redis caching)
+3. Booking Service with distributed locking (Redis + Lua)
+4. Kafka-based Booking Saga workflow
+5. Simulated Payment Gateway with 3DS authentication
+6. PostgreSQL schema initialization (via schema.sql)
+7. REST APIs for booking and payment
+
+============================================================
+Architecture
+============================================================
+[Client] → [API Gateway/Controller]
+         → [Booking Service]
+               ↘ Redis (inventory lock)
+               ↘ Postgres (bookings)
+               ↘ Kafka (booking events)
+         → [Payment Service]
+               ↘ 3DS Challenge Simulation
+
+============================================================
+Booking Flow
+============================================================
+1. Client sends booking request.
+2. BookingService acquires Redis lock for room inventory.
+3. Booking is persisted in PostgreSQL with PENDING status.
+4. Kafka event (BookingCreated) is published.
+5. PaymentService listens for booking events and processes payment.
+6. Payment status (SUCCESS/FAILED) is sent back as Kafka event.
+7. BookingService updates booking status accordingly.
+
+============================================================
+Payment Service (3DS Simulation)
+============================================================
+1. Client initiates payment for a booking.
+2. Payment entry is created with PENDING status.
+3. Client verifies 3DS by submitting OTP (mocked as "123456").
+4. If OTP matches, status = SUCCESS; else status = FAILED.
+5. Kafka event is emitted to notify BookingService.
+
+============================================================
+Database Schema (PostgreSQL)
+============================================================
+CREATE TABLE bookings (
+    id SERIAL PRIMARY KEY,
+    room_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE payments (
+    id SERIAL PRIMARY KEY,
+    booking_id BIGINT REFERENCES bookings(id),
+    amount NUMERIC(10,2) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+============================================================
+REST APIs
+============================================================
+Booking API
+-----------
+POST /api/bookings
+{
+  "roomId": 101,
+  "userId": 55
+}
+
+Payment API
+-----------
+POST /api/payments/initiate
+{
+  "bookingId": 1001,
+  "amount": 5000.00
+}
+
+POST /api/payments/verify
+{
+  "paymentId": 2001,
+  "otp": "123456"
+}
+
+============================================================
+Next Steps / Improvements
+============================================================
+- Implement refund events if booking fails.
+- Add JWT-based authentication for users.
+- Add search & filter for hotels/rooms.
+- Improve error handling with DTOs & exception handlers.
+
+============================================================
+Tech Stack
+============================================================
+- Java 17+
+- Spring Boot
+- Spring Data JPA
+- Spring Kafka
+- Redis
+- PostgreSQL
+- Maven
+
+============================================================
+Run Instructions
+============================================================
+1. Start PostgreSQL (create database hotel_booking).
+2. Start Redis on localhost:6379.
+3. Start Kafka on localhost:9092 (create topics: booking-events, payment-events).
+4. Run the Spring Boot app:
+   mvn spring-boot:run
+5. Use Postman to test APIs.
+
+============================================================
+End of Documentation
+============================================================

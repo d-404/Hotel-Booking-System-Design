@@ -27,6 +27,9 @@ public class Booking {
 	private Status status;
 	private OffsetDateTime createdAt = OffsetDateTime.now();
 
+	public Booking() {
+	}
+
 	public Booking(Long roomId, Long userId, Status status) {
 		this.roomId = roomId;
 		this.userId = userId;

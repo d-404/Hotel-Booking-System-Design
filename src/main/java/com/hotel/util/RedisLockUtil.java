@@ -5,7 +5,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.stereotype.Component;
 
+@Component
 public class RedisLockUtil {
 
 	private final StringRedisTemplate redisTemplate;
